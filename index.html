@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Spendable</title>
+<meta name="description" content="How much can I safely spend today? A daily spending number that protects bills, essentials, savings, debt payments and your cash buffer.">
+<meta name="theme-color" content="#132035">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spendable">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#f2f4f7; --card:#ffffff; --card2:#e9edf2; --ink:#132035; --muted:#55637a;
+  --line:#d3dae4; --line2:#aeb9c8; --accent:#132035; --accent-ink:#ffffff;
+  --ok:#24654a; --ok-bg:#e0efe8; --warn:#855600; --warn-bg:#f8edd3;
+  --bad:#a4241d; --bad-bg:#f8e2e0; --gold:#f5c451;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0c131e; --card:#131c29; --card2:#1a2535; --ink:#e5eaf1; --muted:#98a5b8;
+    --line:#283447; --line2:#3a4a61; --accent:#e5eaf1; --accent-ink:#0c131e;
+    --ok:#7fcaa6; --ok-bg:#132f28; --warn:#e8bd66; --warn-bg:#352912;
+    --bad:#f1958d; --bad-bg:#3a1c1b;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+}
+main{max-width:560px;margin:0 auto}
+h1,h2,h3{margin:0;line-height:1.2}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+header h1{font-family:Georgia,'Times New Roman',serif;font-size:1.5rem;letter-spacing:-.01em;flex:1}
+header .date{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.stack{display:grid;gap:16px}
+.stack-sm{display:grid;gap:8px}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.hero{text-align:left}
+.hero .figure{font-family:Georgia,'Times New Roman',serif;font-size:clamp(3.2rem,16vw,4.6rem);line-height:1;letter-spacing:-.02em;font-variant-numeric:lining-nums tabular-nums}
+.hero .per{font-size:1.1rem;color:var(--muted);font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:.85rem;font-weight:700}
+.pill-ok{background:var(--ok-bg);color:var(--ok)}
+.pill-warn{background:var(--warn-bg);color:var(--warn)}
+.pill-bad{background:var(--bad-bg);color:var(--bad)}
+.banner{border-radius:12px;padding:12px 14px;display:grid;gap:4px}
+.banner-warn{background:var(--warn-bg);border:1.5px dashed var(--warn)}
+.banner-bad{background:var(--bad-bg)}
+.banner b{font-size:.95rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line2);background:var(--card);font-weight:700;cursor:pointer;text-decoration:none;width:100%}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-small{min-height:44px;padding:0 14px;width:auto}
+.btn-danger{color:var(--bad);border-color:var(--bad)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-row .btn{flex:1}
+.field{display:grid;gap:6px}
+.field label{font-weight:700;font-size:.95rem}
+.hint{font-size:.85rem;color:var(--muted)}
+.input{width:100%;min-height:52px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-size:1rem}
+input[type="date"].input{min-height:52px}
+.money{position:relative}
+.money .prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.money .input{padding-left:28px;font-variant-numeric:tabular-nums}
+.grid2{display:grid;gap:14px}
+@media (min-width:480px){.grid2{grid-template-columns:1fr 1fr}}
+.row{display:flex;align-items:center;gap:10px}
+.row .grow{flex:1;min-width:0}
+.spend-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.spend-row:first-child{border-top:0}
+.spend-row .note{flex:1;min-width:0;overflow-wrap:anywhere}
+.spend-row .amt{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.icon-btn{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:1.2rem;cursor:pointer}
+.icon-btn:hover{background:var(--card2)}
+.bill-row{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.bill-row:first-child{border-top:0}
+.bill-row input[type="checkbox"]{width:22px;height:22px;accent-color:var(--ok)}
+.bill-row .name{font-weight:600;overflow-wrap:anywhere}
+.bill-row .due{font-size:.82rem;color:var(--muted)}
+.bill-row .amt{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bill-row.paid{opacity:.55}
+.bill-row.paid .name{text-decoration:line-through}
+details.math{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:4px 18px}
+details.math summary{cursor:pointer;font-weight:700;min-height:52px;display:flex;align-items:center}
+dl.math{margin:0 0 14px}
+dl.math div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
+dl.math div:first-child{border-top:0}
+dl.math dt{color:var(--muted)}
+dl.math dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+dl.math div.total{border-top:2px solid var(--ink)}
+dl.math div.total dd,dl.math div.total dt{font-weight:800;color:var(--ink)}
+.saved{color:var(--ok);font-weight:700;font-size:.85rem;min-height:1.2em}
+footer{max-width:560px;margin:24px auto 0;text-align:center;color:var(--muted);font-size:.82rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Daily Spendable</h1>
+    <span class="date" id="todayLabel"></span>
+    <button class="btn btn-small" id="planBtn" type="button">Plan</button>
+  </header>
+
+  <noscript><div class="card banner banner-warn" style="margin-bottom:16px"><b>JavaScript is off.</b><span class="small">This app calculates on your device, so it needs JavaScript to show your number. Turn it on and reload.</span></div></noscript>
+
+  <!-- ============ TODAY ============ -->
+  <section id="todayView" class="stack">
+    <div id="sampleBanner" class="banner banner-warn" hidden><b>Sample numbers</b><span class="small">You're looking at demo figures. Tap "Use my own numbers" in Plan to start fresh.</span></div>
+    <div id="expiredBanner" class="banner banner-bad" hidden><b>Payday has passed.</b><span class="small">Update your next payday in Plan to get a fresh number.</span></div>
+    <div id="shortBanner" class="banner banner-bad" hidden><b id="shortText"></b><span class="small" id="shortSub"></span></div>
+
+    <div id="emptyState" class="card stack" hidden>
+      <p class="eyebrow">First, the plan</p>
+      <h2 style="font-family:Georgia,serif;font-size:1.7rem">How much can you safely spend today?</h2>
+      <p class="muted">Tell it your checking balance, your next payday, and what must be protected before then. It does the rest — one number, every day.</p>
+      <button class="btn btn-primary" id="setupBtn" type="button">Set up your plan</button>
+      <button class="btn" id="sampleBtn1" type="button">Try sample numbers first</button>
+    </div>
+
+    <div id="heroCard" class="card hero stack-sm" hidden>
+      <p class="eyebrow">You can spend</p>
+      <p><span class="figure num" id="heroAmount">$0.00</span> <span class="per">today</span></p>
+      <p class="muted" id="heroSub"></p>
+      <p><span class="pill" id="statusPill"></span></p>
+    </div>
+
+    <div id="logCard" class="card stack" hidden>
+      <h2>Log spending</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="spendAmt">Amount</label>
+          <div class="money"><span class="prefix">$</span><input class="input" id="spendAmt" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label for="spendNote">What was it? <span class="muted" style="font-weight:400">(optional)</span></label>
+          <input class="input" id="spendNote" placeholder="Coffee, groceries…" autocomplete="off">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="logBtn" type="button">Log it — today's number updates</button>
+      <div>
+        <p class="eyebrow" style="margin-bottom:4px">Spent today</p>
+        <div id="todaySpends"></div>
+        <p class="muted small" id="noSpends" hidden>Nothing logged yet today.</p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:4px">Recent</p>
+        <div id="recentSpends"></div>
+        <p class="muted small" id="noRecent" hidden>No earlier spending logged.</p>
+      </div>
+    </div>
+
+    <details class="math" id="mathCard" hidden>
+      <summary>Show my math</summary>
+      <dl class="math" id="mathBody"></dl>
+      <p class="small muted" style="margin-bottom:14px">Marking a bill paid also takes it out of your checking balance, so paying a bill never inflates your number. Logging a spend lowers your balance too — that's why tomorrow's number already reflects today.</p>
+    </details>
+
+    <button class="btn" id="editPlanBtn" type="button" hidden>Edit plan</button>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section id="planView" class="stack" hidden>
+    <div class="row">
+      <button class="btn btn-small" id="backBtn" type="button">← Today</button>
+      <span class="saved" id="savedNote" aria-live="polite"></span>
+    </div>
+    <div class="card stack">
+      <h2>Your plan</h2>
+      <p class="muted small">Everything saves as you type. Your numbers live only on this device.</p>
+      <div class="field">
+        <label for="fCash">Checking balance</label>
+        <div class="money"><span class="prefix">$</span><input class="input" id="fCash" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+      </div>
+      <div class="field">
+        <label for="fPayday">Next payday</label>
+        <input class="input" type="date" id="fPayday">
+        <p class="hint">Your number counts down to this day. Payday itself counts as one day left.</p>
+      </div>
+      <div class="field">
+        <label for="fBuffer">Cash buffer to protect</label>
+        <div class="money"><span class="prefix">$</span><input class="input" id="fBuffer" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        <p class="hint">Money that never counts as spendable — your floor.</p>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="fEss">Essentials before payday</label>
+          <div class="money"><span class="prefix">$</span><input class="input" id="fEss" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+          <p class="hint">Groceries, gas, basics still to buy.</p>
+        </div>
+        <div class="field">
+          <label for="fSav">Savings to set aside</label>
+          <div class="money"><span class="prefix">$</span><input class="input" id="fSav" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label for="fDebt">Debt payments due</label>
+          <div class="money"><span class="prefix">$</span><input class="input" id="fDebt" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="doneBtn" type="button">Show my number</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Bills due before payday</h2>
+      <p class="muted small">Only unpaid bills due on or before payday count against your number. Bills due later are listed but not counted yet. Tick a bill when you pay it — it leaves both the list and your balance.</p>
+      <div id="billList"></div>
+      <p class="muted small" id="noBills" hidden>No bills yet. Add the ones due before payday.</p>
+      <div class="grid2">
+        <div class="field"><label for="bName">Bill name</label><input class="input" id="bName" placeholder="Rent, phone…" autocomplete="off"></div>
+        <div class="field"><label for="bAmt">Amount</label><div class="money"><span class="prefix">$</span><input class="input" id="bAmt" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div>
+        <div class="field"><label for="bDue">Due date</label><input class="input" type="date" id="bDue"></div>
+      </div>
+      <button class="btn" id="addBillBtn" type="button">Add bill</button>
+    </div>
+
+    <div class="card stack">
+      <h2>New pay period</h2>
+      <p class="muted small">On payday: enter the new balance and the next payday. Old spending clears (it's already in the new balance) and paid bills drop off. Unpaid bills carry over.</p>
+      <div class="grid2">
+        <div class="field"><label for="rCash">New checking balance</label><div class="money"><span class="prefix">$</span><input class="input" id="rCash" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div>
+        <div class="field"><label for="rPayday">Next payday</label><input class="input" type="date" id="rPayday"></div>
+      </div>
+      <button class="btn" id="resetBtn" type="button">Start new pay period</button>
+    </div>
+
+    <div class="card stack">
+      <button class="btn" id="sampleBtn2" type="button">Try sample numbers</button>
+      <button class="btn" id="clearSampleBtn" type="button" hidden>Use my own numbers (clear sample)</button>
+      <button class="btn btn-danger" id="clearAllBtn" type="button">Clear everything</button>
+    </div>
+  </section>
+
+  <footer>Your numbers live only on this device. Nothing is sent anywhere, no account needed.</footer>
+</main>
+<script>
+"use strict";
+/* ---- Pure logic: no DOM here, so this section is unit-testable in node ---- */
+var KEY = "ds:v2";
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function parseMoney(str){
+  if (typeof str === "number") return Math.round(str * 100);
+  if (str == null) return null;
+  var cleaned = String(str).replace(/[^0-9.\-]/g, "");
+  if (cleaned === "" || cleaned === "-" || cleaned === ".") return null;
+  var n = parseFloat(cleaned);
+  if (isNaN(n)) return null;
+  return Math.round(n * 100);
+}
+function fmt(cents){
+  var sign = cents < 0 ? "-" : "";
+  var abs = Math.abs(cents);
+  var dollars = Math.floor(abs / 100);
+  var rem = abs % 100;
+  return sign + "$" + dollars.toLocaleString("en-US") + "." + String(rem).padStart(2, "0");
+}
+function todayStr(d){
+  d = d || new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function parseLocal(str){
+  var p = String(str).split("-");
+  return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+}
+function diffDays(a, b){
+  var da = parseLocal(a), db = parseLocal(b);
+  return Math.round((Date.UTC(db.getFullYear(), db.getMonth(), db.getDate()) - Date.UTC(da.getFullYear(), da.getMonth(), da.getDate())) / 86400000);
+}
+function addDays(str, n){
+  var d = parseLocal(str); d.setDate(d.getDate() + n);
+  return todayStr(d);
+}
+function blankState(){
+  return { cash: 0, payday: "", buffer: 0, ess: 0, sav: 0, debt: 0, bills: [], spends: [], sample: false };
+}
+function sampleState(today){
+  return {
+    cash: 300000, payday: addDays(today, 10), buffer: 50000, ess: 32000, sav: 20000, debt: 15000,
+    bills: [
+      { id: uid(), name: "Rent", cents: 95000, due: addDays(today, 3), paid: false },
+      { id: uid(), name: "Phone", cents: 6500, due: addDays(today, 5), paid: false },
+      { id: uid(), name: "Electric", cents: 11000, due: addDays(today, 8), paid: false }
+    ],
+    spends: [
+      { id: uid(), date: today, cents: 600, note: "Coffee" },
+      { id: uid(), date: today, cents: 4200, note: "Groceries" }
+    ],
+    sample: true
+  };
+}
+function compute(st, today){
+  var spentToday = 0;
+  st.spends.forEach(function(s){ if (s.date === today) spentToday += s.cents; });
+  var counted = [], later = [];
+  st.bills.forEach(function(b){
+    if (b.paid) return;
+    if (!st.payday || b.due <= st.payday) counted.push(b); else later.push(b);
+  });
+  var billsSum = 0, laterSum = 0;
+  counted.forEach(function(b){ billsSum += b.cents; });
+  later.forEach(function(b){ laterSum += b.cents; });
+  var prot = billsSum + st.ess + st.sav + st.debt;
+  var spendable = st.cash - prot - st.buffer;
+  var expired = !!st.payday && st.payday < today;
+  var daysLeft = 0;
+  if (st.payday === today) daysLeft = 1;
+  else if (st.payday) daysLeft = diffDays(today, st.payday);
+  var base = spendable + spentToday;
+  var shortfall = base < 0 ? -base : 0;
+  var daily = (!expired && base > 0 && daysLeft > 0) ? Math.floor(base / daysLeft) : 0;
+  var remaining = daily - spentToday;
+  var status = "good";
+  if (expired) status = "expired";
+  else if (shortfall > 0) status = "short";
+  else if (remaining < 0) status = "over";
+  else if (daily > 0 && remaining <= Math.floor(daily / 4)) status = "low";
+  return {
+    spentToday: spentToday, counted: counted, later: later, billsSum: billsSum, laterSum: laterSum,
+    prot: prot, spendable: spendable, expired: expired, daysLeft: daysLeft, base: base,
+    shortfall: shortfall, daily: daily, remaining: remaining, status: status
+  };
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { parseMoney: parseMoney, fmt: fmt, diffDays: diffDays, compute: compute, blankState: blankState, sampleState: sampleState, todayStr: todayStr, addDays: addDays };
+}
+
+/* ---- App (browser only) ---- */
+if (typeof document !== "undefined") {
+  var $ = function(id){ return document.getElementById(id); };
+  var state = blankState();
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var parsed = JSON.parse(raw); if (parsed && typeof parsed === "object") state = parsed; }
+  } catch (e) { /* corrupted storage: start blank rather than crash */ }
+  if (!Array.isArray(state.bills)) state.bills = [];
+  if (!Array.isArray(state.spends)) state.spends = [];
+  ["cash","buffer","ess","sav","debt"].forEach(function(k){ if (typeof state[k] !== "number" || isNaN(state[k])) state[k] = 0; });
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage full/blocked: keep working in memory */ }
+  }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function dollars(cents){ return cents ? (cents / 100).toFixed(2) : ""; }
+  function flashSaved(){ $("savedNote").textContent = "Saved ✓"; setTimeout(function(){ $("savedNote").textContent = ""; }, 1500); }
+
+  function show(view){
+    $("todayView").hidden = view !== "today";
+    $("planView").hidden = view !== "plan";
+    if (view === "plan") fillPlan();
+    else renderToday();
+    window.scrollTo(0, 0);
+  }
+
+  function renderToday(){
+    var today = todayStr();
+    $("todayLabel").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    $("sampleBanner").hidden = !state.sample;
+    var hasPlan = !!state.payday;
+    var r = compute(state, today);
+    $("expiredBanner").hidden = !hasPlan || !r.expired;
+    $("shortBanner").hidden = !hasPlan || r.expired || r.shortfall <= 0;
+    if (r.shortfall > 0) {
+      $("shortText").textContent = "Short by " + fmt(r.shortfall);
+      $("shortSub").textContent = "Your protected bills, set-asides and buffer are " + fmt(r.shortfall) + " more than your cash. Your spendable number is $0 until cash comes in or something is adjusted.";
+    }
+    $("emptyState").hidden = hasPlan;
+    $("heroCard").hidden = !hasPlan || r.expired;
+    $("logCard").hidden = !hasPlan || r.expired;
+    $("mathCard").hidden = !hasPlan || r.expired;
+    $("editPlanBtn").hidden = !hasPlan;
+    if (!hasPlan || r.expired) { renderSpends(today); return; }
+
+    var shown = r.shortfall > 0 ? 0 : Math.max(0, r.remaining);
+    $("heroAmount").textContent = fmt(shown);
+    var daysTxt = r.daysLeft === 1 ? "payday is today — last day" : r.daysLeft + " days left until payday";
+    $("heroSub").textContent = "Daily allowance " + fmt(r.daily) + " · Spent today " + fmt(r.spentToday) + " · " + daysTxt;
+    var pill = $("statusPill");
+    pill.className = "pill";
+    if (r.shortfall > 0) { pill.classList.add("pill-bad"); pill.textContent = "Short by " + fmt(r.shortfall); }
+    else if (r.status === "over") { pill.classList.add("pill-bad"); pill.textContent = "Over by " + fmt(-r.remaining); }
+    else if (r.status === "low") { pill.classList.add("pill-warn"); pill.textContent = "Almost through today's number"; }
+    else { pill.classList.add("pill-ok"); pill.textContent = "On track"; }
+
+    var rows = [];
+    rows.push(["Checking balance", state.cash, ""]);
+    rows.push(["Bills due by payday (" + r.counted.length + ")", -r.billsSum, ""]);
+    if (r.later.length) rows.push(["Bills due after payday (" + r.later.length + ") — not counted", -r.laterSum, ""]);
+    rows.push(["Essentials before payday", -state.ess, ""]);
+    rows.push(["Savings to set aside", -state.sav, ""]);
+    rows.push(["Debt payments due", -state.debt, ""]);
+    rows.push(["Cash buffer", -state.buffer, ""]);
+    rows.push(["Spendable cash", state.cash - r.prot - state.buffer, "total"]);
+    rows.push(["Plus: spent today (added back)", r.spentToday, ""]);
+    rows.push(["Daily allowance (" + fmt(r.base) + " ÷ " + r.daysLeft + " days, rounded down)", r.daily, ""]);
+    rows.push(["Less: spent today", -r.spentToday, ""]);
+    rows.push(["You can spend today", Math.max(0, r.remaining), "total"]);
+    $("mathBody").innerHTML = rows.map(function(row){
+      return '<div' + (row[2] === "total" ? ' class="total"' : "") + '><dt>' + esc(row[0]) + '</dt><dd>' + fmt(row[1]) + '</dd></div>';
+    }).join("");
+    renderSpends(today);
+  }
+
+  function spendRow(s){
+    var label = s.date === todayStr() ? "Today" : parseLocal(s.date).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return '<div class="spend-row"><div class="note">' + (s.note ? esc(s.note) + "<br>" : "") + '<span class="small muted">' + esc(label) + '</span></div>' +
+      '<span class="amt">' + fmt(s.cents) + '</span>' +
+      '<button class="icon-btn" type="button" data-del-spend="' + esc(s.id) + '" aria-label="Delete">×</button></div>';
+  }
+  function renderSpends(today){
+    var todays = state.spends.filter(function(s){ return s.date === today; });
+    var recent = state.spends.filter(function(s){ return s.date !== today; }).slice(0, 10);
+    $("todaySpends").innerHTML = todays.map(spendRow).join("");
+    $("noSpends").hidden = todays.length > 0;
+    $("recentSpends").innerHTML = recent.map(spendRow).join("");
+    $("noRecent").hidden = recent.length > 0;
+    document.querySelectorAll("[data-del-spend]").forEach(function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute("data-del-spend");
+        var s = null;
+        state.spends.forEach(function(x){ if (x.id === id) s = x; });
+        if (!s) return;
+        if (!confirm("Delete this " + fmt(s.cents) + " spend? Your balance goes back up by that amount.")) return;
+        state.spends = state.spends.filter(function(x){ return x.id !== id; });
+        state.cash += s.cents;
+        save(); renderToday();
+      };
+    });
+  }
+
+  function fillPlan(){
+    $("fCash").value = dollars(state.cash);
+    $("fPayday").value = state.payday || "";
+    $("fBuffer").value = dollars(state.buffer);
+    $("fEss").value = dollars(state.ess);
+    $("fSav").value = dollars(state.sav);
+    $("fDebt").value = dollars(state.debt);
+    $("clearSampleBtn").hidden = !state.sample;
+    renderBills();
+  }
+  function renderBills(){
+    var sorted = state.bills.slice().sort(function(a, b){ return a.due < b.due ? -1 : a.due > b.due ? 1 : 0; });
+    $("noBills").hidden = sorted.length > 0;
+    $("billList").innerHTML = sorted.map(function(b){
+      var after = state.payday && b.due > state.payday;
+      return '<div class="bill-row' + (b.paid ? " paid" : "") + '">' +
+        '<input type="checkbox" data-paid="' + esc(b.id) + '"' + (b.paid ? " checked" : "") + ' aria-label="Mark paid">' +
+        '<div><div class="name">' + esc(b.name) + '</div><div class="due">Due ' + esc(b.due) + (after ? " · after payday, not counted" : "") + (b.paid ? " · paid" : "") + '</div></div>' +
+        '<span class="amt">' + fmt(b.cents) + '</span>' +
+        '<button class="icon-btn" type="button" data-del-bill="' + esc(b.id) + '" aria-label="Delete bill">×</button></div>';
+    }).join("");
+    document.querySelectorAll("[data-paid]").forEach(function(box){
+      box.onchange = function(){
+        var id = box.getAttribute("data-paid"), b = null;
+        state.bills.forEach(function(x){ if (x.id === id) b = x; });
+        if (!b) return;
+        b.paid = box.checked;
+        state.cash += box.checked ? -b.cents : b.cents;
+        save(); fillPlan(); renderToday();
+      };
+    });
+    document.querySelectorAll("[data-del-bill]").forEach(function(btn){
+      btn.onclick = function(){
+        var id = btn.getAttribute("data-del-bill");
+        if (!confirm("Delete this bill?")) return;
+        state.bills = state.bills.filter(function(x){ return x.id !== id; });
+        save(); fillPlan(); renderToday();
+      };
+    });
+  }
+
+  function bindMoney(id, key){
+    $(id).addEventListener("change", function(){
+      var v = parseMoney($(id).value);
+      state[key] = v == null ? 0 : Math.max(0, v);
+      $(id).value = dollars(state[key]);
+      save(); flashSaved(); renderToday();
+    });
+  }
+  bindMoney("fCash", "cash"); bindMoney("fBuffer", "buffer");
+  bindMoney("fEss", "ess"); bindMoney("fSav", "sav"); bindMoney("fDebt", "debt");
+  $("fPayday").addEventListener("change", function(){ state.payday = $("fPayday").value || ""; save(); flashSaved(); renderToday(); });
+
+  $("planBtn").onclick = function(){ show("plan"); };
+  $("editPlanBtn").onclick = function(){ show("plan"); };
+  $("backBtn").onclick = function(){ show("today"); };
+  $("setupBtn").onclick = function(){ show("plan"); };
+  $("doneBtn").onclick = function(){
+    if (!state.payday) { $("fPayday").focus(); return; }
+    state.sample = false; save(); show("today");
+  };
+  $("addBillBtn").onclick = function(){
+    var name = $("bName").value.trim();
+    var cents = parseMoney($("bAmt").value);
+    var due = $("bDue").value || state.payday || "";
+    if (!name) { $("bName").focus(); return; }
+    if (cents == null || cents <= 0) { $("bAmt").focus(); return; }
+    if (!due) { $("bDue").focus(); return; }
+    state.bills.push({ id: uid(), name: name, cents: cents, due: due, paid: false });
+    $("bName").value = ""; $("bAmt").value = ""; $("bDue").value = "";
+    save(); flashSaved(); fillPlan(); renderToday();
+  };
+  $("logBtn").onclick = function(){
+    var cents = parseMoney($("spendAmt").value);
+    if (cents == null || cents <= 0) { $("spendAmt").style.borderColor = "var(--bad)"; $("spendAmt").focus(); return; }
+    $("spendAmt").style.borderColor = "";
+    state.spends.unshift({ id: uid(), date: todayStr(), cents: cents, note: $("spendNote").value.trim() });
+    state.cash -= cents;
+    $("spendAmt").value = ""; $("spendNote").value = "";
+    save(); renderToday();
+  };
+  $("spendAmt").addEventListener("keydown", function(e){ if (e.key === "Enter") $("logBtn").click(); });
+  $("resetBtn").onclick = function(){
+    var nc = parseMoney($("rCash").value);
+    var np = $("rPayday").value || "";
+    if (nc == null || !np) { if (nc == null) $("rCash").focus(); else $("rPayday").focus(); return; }
+    if (!confirm("Start a new pay period? Old spending clears and paid bills drop off. Unpaid bills carry over.")) return;
+    state.cash = Math.max(0, nc); state.payday = np; state.spends = [];
+    state.bills = state.bills.filter(function(b){ return !b.paid; });
+    state.sample = false;
+    $("rCash").value = ""; $("rPayday").value = "";
+    save(); flashSaved(); fillPlan(); show("today");
+  };
+  function useSample(){ state = sampleState(todayStr()); save(); show("today"); }
+  $("sampleBtn1").onclick = useSample;
+  $("sampleBtn2").onclick = useSample;
+  $("clearSampleBtn").onclick = function(){ state = blankState(); save(); show("plan"); };
+  $("clearAllBtn").onclick = function(){
+    if (!confirm("Clear everything? Your plan, bills and spending history will be gone.")) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    state = blankState(); show("today");
+  };
+
+  renderToday();
+}
+</script>
+</body>
+</html>
